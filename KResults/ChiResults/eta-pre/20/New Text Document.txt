@@ -1,0 +1,8 @@
+increased equity: 0.25846
+#new edges: 19
+real increase: 0.23265
+estimated increase conn: 0.23169
+recompute: 0.21145
+estimated increase demand: 0.28522
+estimated time on conn and ub: 29350.45
+Elapsed time is 156.309530 seconds.

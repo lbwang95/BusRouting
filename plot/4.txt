@@ -1,0 +1,56 @@
+]};
+	
+	map.on('load', function () {
+	// Add a GeoJSON source containing place coordinates and information.
+		map.loadImage(
+			'https://upload.wikimedia.org/wikipedia/commons/8/88/Bus_icon_yellow.jpg',
+			(error, image) => {
+			if (error) throw error;
+			map.addImage('custom-marker', image)});
+		// Add a GeoJSON source with 2 points
+		
+		map.addSource('places1', {
+		'type': 'geojson',
+		'data': places1
+		});
+		 
+		map.addLayer({
+				'id': 'NewBusStops',
+				'type': 'symbol',
+				'source': 'places1',
+				'layout': {
+				'icon-image': 'custom-marker',
+				'icon-allow-overlap': true,
+				'icon-size': 1.3,
+				'text-field': ['get', 'description'],
+				'text-size':30,
+				'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+				'text-radial-offset': 0.5,
+				'text-justify': 'auto',
+				}
+		});
+	});
+	
+
+	
+
+	//****************************MouseCoordinates****************************
+	map.on('mousemove', function (e) {
+	document.getElementById('info').innerHTML =
+	// e.point is the x, y coordinates of the mousemove event relative
+	// to the top-left corner of the map
+	JSON.stringify(e.point) +
+	'<br />' +
+	// e.lngLat is the longitude, latitude geographical position of the event
+	JSON.stringify(e.lngLat.wrap());
+	});
+
+	//****************************Heatmap****************************
+	map.on('load', () => {
+			// Add a geojson point source.
+			// Heatmap layers also work with a vector tile source.
+			map.addSource('earthquakes', {
+				'type': 'geojson',
+				'data': {
+						'type': 'FeatureCollection',
+						"features": [

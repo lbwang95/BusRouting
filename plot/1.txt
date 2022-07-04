@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>基于预测方法的空间任务在线分配系统</title>
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport' />
+<script src='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.js'></script>
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.css' rel='stylesheet' />
+<script src="http://code.jquery.com/jquery-1.4.3.js"></script>
+<link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+  #sidebar {
+    width:275px;
+    border-left:1px solid #aaa;
+    left:0;
+    top:0;
+    bottom:0;
+    position:absolute;
+    text-align:center;
+    overflow:scroll
+  }
+  #sound {
+    bottom:0;
+    right:0;
+    position:absolute;
+    width:275px
+  }
+  .metriclabel {
+    text-transform: uppercase;
+    color:#fff;
+    opacity:0.75;
+    font-weight:bold;
+	font-size:1.5em;
+  }
+
+  .metric {
+    margin:0px;
+    font-size:5em;
+    font-weight:bold;
+    color:#fff;
+    opacity:0.3;
+  }
+   path {
+    stroke-dashoffset: 10000; 
+    stroke-dasharray:10000; 
+    -webkit-transition:stroke-dashoffset 6s ease-in
+  }
+
+  .couriericon {
+    transition:all 0.25s linear; 
+    width:15px; 
+    height:15px;
+    border-radius:10px; 
+    color:rgba(255,255,255,0.75);
+    text-align:center;
+    line-height:1.6em;
+    font-size:0.8em;
+    font-weight:bold;
+    z-index:999;
+  }
+  .couriericon.Blue{
+    background:#456E75;
+  }
+  .couriericon.Green{
+    background:#8F9957;
+  }
+  .couriericon.Orange{
+    background:#B87C51;
+  }
+  .couriericon.Red{
+    background:#B04548;
+  }
+  .couriericon.Purple{
+    background:#5C2E58;
+  }
+  .couriericon.Grey{
+    background:#808A87;
+  }
+  .couriertarget {
+    z-index:1;
+  }
+  svg path.leaflet-clickable {
+    stroke-width:3px;
+    stroke-opacity:0.7;
+  }
+  .leaflet-popup-content-wrapper {
+    background:#fff;
+    color:#666;
+    opacity:0.9;
+    box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  }
+  .leaflet-popup-content {
+    padding:0px 5px;
+    font-weight:bold
+  }
+  .leaflet-popup-tip {
+    border-top: 5px solid #fff;
+    opacity:1;
+  }
+
+  .leaflet-fade-anim .leaflet-popup, 
+  .leaflet-fade-anim .leaflet-tile{
+    -webkit-transition:none;
+  }
+  .ticker {
+    overflow:scroll;
+    border-top:1px solid rgba(255,255,255,0.25);
+
+  }
+  .ticker div{
+    padding:0px 15px;
+    color:#828a8e;
+    max-height:0px;
+    overflow:hidden;
+    transition:all 0.5s ease-in;
+    opacity:0;
+  }
+
+  .ticker div.expanded {
+    max-height:200px;
+    padding:10px 15px;
+    border-bottom:1px solid rgba(255,255,255,0.25);
+    opacity:1
+  }
+
+  .ticker div strong {
+    color:white;
+    border-radius:2px
+  }
+.ticker div .incoming {
+  color:#222B30;
+  background:#828a8e;
+}
+#buttons {
+width: 90%;
+margin: 0 auto;
+}
+.button {
+display: inline-block;
+position: relative;
+cursor: pointer;
+width: 20%;
+padding: 8px;
+border-radius: 3px;
+margin-top: 10px;
+font-size: 12px;
+text-align: center;
+color: #fff;
+background: #ee8a65;
+font-family: sans-serif;
+font-weight: bold;
+}
+#info {
+display: block;
+position: relative;
+margin: 0px auto;
+width: 50%;
+padding: 10px;
+border: none;
+border-radius: 3px;
+font-size: 12px;
+text-align: center;
+color: #222;
+background: #fff;
+}
+</style>
+    <!--[if lt IE 9]>
+    <script src='static/javascripts/html5shiv.js' type='text/javascript'></script>
+    <![endif]-->
+    <link href='static/stylesheets/bootstrap/bootstrap.css' media='all' rel='stylesheet' type='text/css' />
+    <link href='static/stylesheets/bootstrap/bootstrap-responsive.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / jquery ui -->
+    <link href='static/stylesheets/jquery_ui/jquery-ui-1.10.0.custom.css' media='all' rel='stylesheet' type='text/css' />
+    <link href='static/stylesheets/jquery_ui/jquery.ui.1.10.0.ie.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / switch buttons -->
+    <link href='static/stylesheets/plugins/bootstrap_switch/bootstrap-switch.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / xeditable -->
+    <link href='static/stylesheets/plugins/xeditable/bootstrap-editable.css' media='all' rel='stylesheet' type='text/css' />
+    <link href='static/stylesheets/plugins/common/bootstrap-wysihtml5.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / wysihtml5 (wysywig) -->
+    <link href='static/stylesheets/plugins/common/bootstrap-wysihtml5.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / jquery file upload -->
+    <link href='static/stylesheets/plugins/jquery_fileupload/jquery.fileupload-ui.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / full calendar -->
+    <link href='static/stylesheets/plugins/fullcalendar/fullcalendar.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / select2 -->
+    <link href='static/stylesheets/plugins/select2/select2.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / mention -->
+    <link href='static/stylesheets/plugins/mention/mention.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / tabdrop (responsive tabs) -->
+    <link href='static/stylesheets/plugins/tabdrop/tabdrop.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / jgrowl notifications -->
+    <link href='static/stylesheets/plugins/jgrowl/jquery.jgrowl.min.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / datatables -->
+    <link href='static/stylesheets/plugins/datatables/bootstrap-datatable.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / dynatrees (file trees) -->
+    <link href='static/stylesheets/plugins/dynatree/ui.dynatree.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / color picker -->
+    <link href='static/stylesheets/plugins/bootstrap_colorpicker/bootstrap-colorpicker.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / datetime picker -->
+    <link href='static/stylesheets/plugins/bootstrap_datetimepicker/bootstrap-datetimepicker.min.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / daterange picker) -->
+    <link href='static/stylesheets/plugins/bootstrap_daterangepicker/bootstrap-daterangepicker.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / flags (country flags) -->
+    <link href='static/stylesheets/plugins/flags/flags.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / slider nav (address book) -->
+    <link href='static/stylesheets/plugins/slider_nav/slidernav.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / fuelux (wizard) -->
+    <link href='static/stylesheets/plugins/fuelux/wizard.css' media='all' rel='stylesheet' type='text/css' />
+    <!-- / flatty theme -->
+    <link href='static/stylesheets/light-theme.css' id='color-settings-body-color' media='all' rel='stylesheet' type='text/css' />
+    <!-- / demo -->
+    <link href='static/stylesheets/demo.css' media='all' rel='stylesheet' type='text/css' />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
+<body class='contrast-dark main-nav-closed'>
+<header>
+    <div class='navbar'>
+        <div class='navbar-inner'>
+            <div class='container-fluid'>
+                <a class='brand' href='index.html'>
+                    <i class='icon-home'></i>
+                    <span class='hidden-phone'>基于预测方法的空间任务在线分配系统</span>
+                </a>
+                <a class='toggle-nav btn pull-left' href='#'>
+                    <i class='icon-reorder'></i>
+                </a>
+				<!--
+				<div class='span3' style="height:30px; position: relative;top:5px;">
+                        <select class='input-block-level' id='select2-icon'>
+                            <option value='1' />简单的贪心算法
+                            <option value='2' />预测指导分配算法
+                            <option value='3' />基于预测指导分配的贪心算法
+                        </select>
+				</div>
+				<button id="confirm_Show" class="btn btn-primary" name="button" style=" position: relative;bottom:1px" type="submit">Confirm</button>-->
+                <ul class='nav pull-right'>
+                    <li class='dropdown light only-icon'>
+                        <a class='dropdown-toggle' data-toggle='dropdown' href='#'>
+                            <i class='icon-adjust'></i>
+                        </a>
+                        <ul class='dropdown-menu color-settings'>
+                            <li class='color-settings-body-color'>
+                                <div class='color-title'>Body color</div>
+                                <a data-change-to='static/stylesheets/light-theme.css' href='#'>
+                                    Light
+                                    <small>(default)</small>
+                                </a>
+                            </li>
+                            <li class='divider'></li>
+                            <li class='color-settings-contrast-color'>
+                                <div class='color-title'>Contrast color</div>
+                                <a href="#" data-change-to="contrast-red"><i class='icon-adjust text-red'></i>
+                                    Red
+                                    
+                                </a>
+                                <a href="#" data-change-to="contrast-blue"><i class='icon-adjust text-blue'></i>
+                                    Blue
+                                </a>
+                                <a href="#" data-change-to="contrast-orange"><i class='icon-adjust text-orange'></i>
+                                    Orange
+                                </a>
+                                <a href="#" data-change-to="contrast-purple"><i class='icon-adjust text-purple'></i>
+                                    Purple
+                                </a>
+                                <a href="#" data-change-to="contrast-green"><i class='icon-adjust text-green'></i>
+                                    Green
+                                </a>
+                                <a href="#" data-change-to="contrast-muted"><i class='icon-adjust text-muted'></i>
+                                    Muted
+                                </a>
+                                <a href="#" data-change-to="contrast-fb"><i class='icon-adjust text-fb'></i>
+                                    Facebook
+                                </a>
+                                <a href="#" data-change-to="contrast-dark"><i class='icon-adjust text-dark'></i>
+                                    Dark<small>(default)</small>
+                                </a>
+                                <a href="#" data-change-to="contrast-pink"><i class='icon-adjust text-pink'></i>
+                                    Pink
+                                </a>
+                                <a href="#" data-change-to="contrast-grass-green"><i class='icon-adjust text-grass-green'></i>
+                                    Grass green
+                                </a>
+                                <a href="#" data-change-to="contrast-sea-blue"><i class='icon-adjust text-sea-blue'></i>
+                                    Sea blue
+                                </a>
+                                <a href="#" data-change-to="contrast-banana"><i class='icon-adjust text-banana'></i>
+                                    Banana
+                                </a>
+                                <a href="#" data-change-to="contrast-dark-orange"><i class='icon-adjust text-dark-orange'></i>
+                                    Dark orange
+                                </a>
+                                <a href="#" data-change-to="contrast-brown"><i class='icon-adjust text-brown'></i>
+                                    Brown
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <form accept-charset="UTF-8" action="search_results.html" class="navbar-search pull-right hidden-phone" method="get" /><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="&#x2713;" /></div>
+                    <button class="btn btn-link icon-search" name="button" type="submit"></button>
+                    <input autocomplete="off" class="search-query span2" id="q_header" name="q" placeholder="Search..." type="text" value="" />
+                </form>
+            </div>
+        </div>
+    </div>
+</header>
+<div id='wrapper'>
+
+	<div id='map'></div>
+	<pre id="info"></pre>
+	<link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoibGJ3YW5nIiwiYSI6ImNrcTBjeDh1cTAzcWMycGsxbnU3ZDAwN2MifQ.RjrcbqhRwMcaBaMogWyOFA';
+	var map = new mapboxgl.Map({
+		container: 'map',
+		style: 'mapbox://styles/mapbox/streets-v11',
+		center: [

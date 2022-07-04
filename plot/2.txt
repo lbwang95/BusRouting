@@ -1,0 +1,22 @@
+],
+		zoom: 8
+	});
+	 
+	//****************************Marker****************************
+	// Create a default Marker and add it to the map.
+	var marker1 = new mapboxgl.Marker({ color: '#1E90FF', rotation: 0,title: 'sdsadasad' })
+	.setLngLat([116.3878231,39.974836])//116.3497478,40.0190499])
+	.addTo(map);
+	 
+	// Create a default Marker, colored black, rotated 45 degrees.
+	var marker2 = new mapboxgl.Marker({ color: '#00BFFF', rotation: 0,'description': "Ford's Theater" })
+	.setLngLat([116.4199921,39.9680628])
+	.addTo(map);
+	
+	//****************************GeoLines****************************
+	map.on('load', function () {
+		map.addSource('lines', {
+		'type': 'geojson',
+		'data': {
+		'type': 'FeatureCollection',
+			'features': [
