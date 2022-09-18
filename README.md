@@ -8,7 +8,7 @@ Usage
 
 ### Environment
 
-g++ version: 7.4.0 
+gcc version: 9.4.0 
 
 OS: Ubuntu/CentOS (Unix)
 
